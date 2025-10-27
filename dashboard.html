@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Security Operations Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e1e2e 0%, #2d2d44 100%);
+            color: #e0e0e0;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        header {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 25px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        h1 {
+            font-size: 2.5em;
+            color: #00d4ff;
+            text-shadow: 0 0 20px rgba(0, 212, 255, 0.5);
+        }
+        
+        .subtitle {
+            color: #b0b0b0;
+            margin-top: 8px;
+            font-size: 1.1em;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 25px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+        
+        .stat-card h3 {
+            color: #a0a0a0;
+            font-size: 0.9em;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+            letter-spacing: 1px;
+        }
+        
+        .stat-value {
+            font-size: 2.5em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .stat-card.critical .stat-value { color: #ff4757; }
+        .stat-card.high .stat-value { color: #ff6348; }
+        .stat-card.medium .stat-value { color: #ffa502; }
+        .stat-card.low .stat-value { color: #26de81; }
+        .stat-card.total .stat-value { color: #00d4ff; }
+        
+        .events-section {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 25px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        h2 {
+            color: #00d4ff;
+            margin-bottom: 20px;
+            font-size: 1.8em;
+        }
+        
+        .event-list {
+            display: grid;
+            gap: 15px;
+        }
+        
+        .event-item {
+            background: rgba(255, 255, 255, 0.03);
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .event-item:hover {
+            background: rgba(255, 255, 255, 0.08);
+            transform: translateX(5px);
+        }
+        
+        .event-item.critical { border-left-color: #ff4757; }
+        .event-item.high { border-left-color: #ff6348; }
+        .event-item.medium { border-left-color: #ffa502; }
+        .event-item.low { border-left-color: #26de81; }
+        
+        .event-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        
+        .event-title {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #ffffff;
+        }
+        
+        .priority-badge {
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        
+        .priority-badge.critical { background: #ff4757; color: white; }
+        .priority-badge.high { background: #ff6348; color: white; }
+        .priority-badge.medium { background: #ffa502; color: white; }
+        .priority-badge.low { background: #26de81; color: white; }
+        
+        .event-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            margin-top: 12px;
+            font-size: 0.9em;
+        }
+        
+        .detail-item {
+            color: #b0b0b0;
+        }
+        
+        .detail-label {
+            color: #00d4ff;
+            font-weight: bold;
+            margin-right: 5px;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 50px;
+            color: #00d4ff;
+            font-size: 1.5em;
+        }
+        
+        .error {
+            background: rgba(255, 71, 87, 0.1);
+            border: 1px solid #ff4757;
+            color: #ff4757;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        
+        .refresh-btn {
+            background: linear-gradient(135deg, #00d4ff 0%, #0096c7 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: all 0.3s ease;
+        }
+        
+        .refresh-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 20px rgba(0, 212, 255, 0.4);
+        }
+        
+        .timestamp {
+            color: #888;
+            font-size: 0.85em;
+            margin-top: 5px;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            margin-left: 10px;
+        }
+        
+        .status-badge.active { background: #ff4757; color: white; }
+        .status-badge.investigating { background: #ffa502; color: white; }
+        .status-badge.monitoring { background: #00d4ff; color: white; }
+        .status-badge.mitigated { background: #26de81; color: white; }
+        .status-badge.quarantined { background: #8e44ad; color: white; }
+        .status-badge.resolved { background: #27ae60; color: white; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🛡️ Security Operations Dashboard</h1>
+            <p class="subtitle">Real-time threat monitoring and incident prioritization</p>
+            <button class="refresh-btn" onclick="loadDashboardData()">🔄 Refresh Data</button>
+        </header>
+        
+        <div id="stats" class="stats-grid">
+            <div class="loading">Loading statistics...</div>
+        </div>
+        
+        <div class="events-section">
+            <h2>📊 Security Events (Prioritized)</h2>
+            <div id="events" class="event-list">
+                <div class="loading">Loading security events...</div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // API endpoints
+        const API_BASE = '';
+        const EVENTS_API = `${API_BASE}/api/events`;
+        const STATS_API = `${API_BASE}/api/stats`;
+        
+        // Load dashboard data
+        async function loadDashboardData() {
+            await Promise.all([
+                loadStats(),
+                loadEvents()
+            ]);
+        }
+        
+        // Load statistics
+        async function loadStats() {
+            try {
+                const response = await fetch(STATS_API);
+                const stats = await response.json();
+                
+                const statsHTML = `
+                    <div class="stat-card total">
+                        <h3>Total Events</h3>
+                        <div class="stat-value">${stats.total_events}</div>
+                    </div>
+                    <div class="stat-card critical">
+                        <h3>Critical</h3>
+                        <div class="stat-value">${stats.critical_count}</div>
+                    </div>
+                    <div class="stat-card high">
+                        <h3>High Priority</h3>
+                        <div class="stat-value">${stats.high_count}</div>
+                    </div>
+                    <div class="stat-card medium">
+                        <h3>Medium Priority</h3>
+                        <div class="stat-value">${stats.medium_count}</div>
+                    </div>
+                    <div class="stat-card low">
+                        <h3>Low Priority</h3>
+                        <div class="stat-value">${stats.low_count}</div>
+                    </div>
+                `;
+                
+                document.getElementById('stats').innerHTML = statsHTML;
+            } catch (error) {
+                document.getElementById('stats').innerHTML = `
+                    <div class="error">Failed to load statistics: ${error.message}</div>
+                `;
+            }
+        }
+        
+        // Load security events
+        async function loadEvents() {
+            try {
+                const response = await fetch(EVENTS_API);
+                const events = await response.json();
+                
+                if (events.length === 0) {
+                    document.getElementById('events').innerHTML = '<p>No security events found.</p>';
+                    return;
+                }
+                
+                const eventsHTML = events.map(event => `
+                    <div class="event-item ${event.severity.toLowerCase()}">
+                        <div class="event-header">
+                            <div class="event-title">
+                                ${event.event_type}
+                                <span class="status-badge ${event.status}">${event.status}</span>
+                            </div>
+                            <span class="priority-badge ${event.priority.toLowerCase()}">
+                                ${event.priority}
+                            </span>
+                        </div>
+                        <p>${event.description}</p>
+                        <div class="event-details">
+                            <div class="detail-item">
+                                <span class="detail-label">ID:</span>${event.id}
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Threat Type:</span>${event.threat_type}
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Source IP:</span>${event.source_ip}
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Destination IP:</span>${event.destination_ip}
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Affected Systems:</span>${event.affected_systems.join(', ')}
+                            </div>
+                        </div>
+                        <div class="timestamp">⏰ ${new Date(event.timestamp).toLocaleString()}</div>
+                    </div>
+                `).join('');
+                
+                document.getElementById('events').innerHTML = eventsHTML;
+            } catch (error) {
+                document.getElementById('events').innerHTML = `
+                    <div class="error">Failed to load events: ${error.message}</div>
+                `;
+            }
+        }
+        
+        // Load data on page load
+        loadDashboardData();
+        
+        // Auto-refresh every 30 seconds
+        setInterval(loadDashboardData, 30000);
+    </script>
+</body>
+</html>
